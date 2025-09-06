@@ -1,5 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Note from "./Note";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import { motion } from "motion/react";
+
 
 const ViewNotes = () => {
   const url = import.meta.env.VITE_BACKEND_URL;
@@ -9,6 +12,7 @@ const ViewNotes = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedSemester, setSelectedSemester] = useState("");
+  const [loading, setLoading] = useState(true);
   const size = 6;
 
   useEffect(() => {
@@ -17,37 +21,44 @@ const ViewNotes = () => {
   }, [page]);
 
   const fetchNotes = async (pageNo) => {
+    setLoading(true);
     try {
-      const res = await fetch(`${url}/api/getNoteBySearch?query=${searchTerm}&course=${selectedCourse}&semester=${selectedSemester}&page=${pageNo}&size=${size}`);
+      const res = await fetch(
+        `${url}/api/getNoteBySearch?query=${searchTerm}&course=${selectedCourse}&semester=${selectedSemester}&page=${pageNo}&size=${size}`
+      );
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
       const data = await res.json();
       if (pageNo === 0) {
-        // reset notes on first load/search
         setNotes(data.content || []);
       } else {
         setNotes((prev) => [...prev, ...(data.content || [])]);
       }
 
-      setHasMore(!data.last); // "last" from Spring PageImpl
+      setHasMore(!data.last);
     } catch (err) {
       console.error("Error fetching notes:", err);
+    } finally {
+      setLoading(false);  
     }
   };
 
   const loadMore = () => setPage((prev) => prev + 1);
 
   const handleSearch = () => {
-    setPage(0); // reset to first page
+    setPage(0);
     fetchNotes(0);
   };
 
   return (
-    <div className="secondary px-4 sm:px-6 lg:px-10 pt-28 pb-12 min-h-screen">
+    <div className="secondary px-4 sm:px-6 lg:px-10 pt-28 pb-12 min-h-screen overflow-x-hidden">
       {/* Title */}
-      <h2 className="text-3xl sm:text-4xl font-satisfy primary-g mb-10 text-center">
+      <motion.h2 className="text-3xl sm:text-4xl font-satisfy primary-g mb-10 text-center"
+        animate={{ y: [-30, 0], opacity: [0, 1] }}
+        transition={{ duration: 0.7 }}
+      >
         📚 Explore Study Notes
-      </h2>
+      </motion.h2>
 
       {/* Search + Filters */}
       <div className="mb-10">
@@ -109,15 +120,31 @@ const ViewNotes = () => {
       </div>
 
       {/* Notes Grid */}
-      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto">
-        {notes.length > 0 ? (
-          notes.map((note, idx) => <Note key={idx} {...note} />)
-        ) : (
-          <p className="text-gray-600 italic col-span-full text-center">
-            No notes found 📭
-          </p>
-        )}
-      </div>
+      <motion.div
+  className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto"
+  initial="hidden"
+  animate="show"
+  variants={{
+    hidden: {},
+    show: { transition: { staggerChildren: 0.15 } },
+  }}
+>
+  {notes.map((note, idx) => (
+    <Note key={idx} {...note} />
+  ))}
+</motion.div>
+
+      {/* Loading Animation */}
+      {loading && (
+        <div className="flex justify-center items-center">
+          <DotLottieReact
+          className=" scale-150"
+            src="https://lottie.host/3ded9c43-de2a-451c-b41b-195a08378697/WAcYiyV8T4.json"
+            loop
+            autoplay
+          />
+        </div>
+      )}
 
       {/* Load More Button */}
       <div className="text-center mt-10">

@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Delete, Download, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/build/pdf.worker.entry";
+import { motion } from "motion/react";
 
 const NoteCard = ({
   id,
@@ -15,14 +16,18 @@ const NoteCard = ({
   deleteOption,
 }) => {
   const canvasRef = useRef(null);
+  const [inView, setInView] = useState(false);
 
   // Detect file type
   const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(fileUrl);
   const isPdf = /\.pdf$/i.test(fileUrl);
 
+  // Render PDF only when card is in view
   useEffect(() => {
-    if (isPdf && canvasRef.current) {
-      const loadPdf = async () => {
+  let timer;
+  if (isPdf && inView && canvasRef.current) {
+    timer = setTimeout(() => {
+      (async () => {
         try {
           const pdf = await pdfjsLib.getDocument(fileUrl).promise;
           const page = await pdf.getPage(1);
@@ -33,18 +38,16 @@ const NoteCard = ({
           canvas.height = viewport.height;
           canvas.width = viewport.width;
 
-          await page.render({
-            canvasContext: context,
-            viewport: viewport,
-          }).promise;
+          await page.render({ canvasContext: context, viewport }).promise;
         } catch (err) {
           console.error("Error rendering PDF:", err);
         }
-      };
+      })();
+    }, 500); // 👈 small delay, avoids blocking animations
+  }
+  return () => clearTimeout(timer);
+}, [fileUrl, isPdf, inView]);
 
-      loadPdf();
-    }
-  }, [fileUrl, isPdf]);
 
   const handleDeleteNote = async (id) => {
     const url = import.meta.env.VITE_BACKEND_URL;
@@ -65,15 +68,18 @@ const NoteCard = ({
   };
 
   return (
-    <div className="max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all">
+    <motion.div
+      className="max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden"
+      initial={{ y: 50, opacity: 0 }}
+      whileInView={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.2 }}
+      onViewportEnter={() => setInView(true)} // <-- trigger PDF render only in view
+    >
       {/* Thumbnail */}
       <div className="h-48 bg-gray-100 flex items-center justify-center overflow-hidden">
         {isImage ? (
-          <img
-            src={fileUrl}
-            alt={notesName}
-            className="h-full w-full object-cover"
-          />
+          <img src={fileUrl} alt={notesName} className="h-full w-full object-cover" />
         ) : isPdf ? (
           <canvas ref={canvasRef} className="h-full w-full object-cover" />
         ) : (
@@ -83,9 +89,7 @@ const NoteCard = ({
 
       {/* Content */}
       <div className="p-4">
-        <h3 className="mb-1 text-lg font-semibold text-gray-900">
-          {notesName}
-        </h3>
+        <h3 className="mb-1 text-lg font-semibold text-gray-900">{notesName}</h3>
         <p className="text-sm text-gray-600 mb-2">✍️ {author}</p>
 
         <div className="flex flex-wrap gap-2 text-xs mb-3">
@@ -117,14 +121,11 @@ const NoteCard = ({
             <Download size={14} />
             Download
           </a>
-          {/* if DelteOption is true */}
           <div className="flex gap-1">
             {deleteOption && (
               <button
                 className="flex items-center px-2 gap-1 py-1.5 text-xs bg-red-500 text-white rounded-full hover:bg-red-700 transition-colors"
-                onClick={() => {
-                  handleDeleteNote(id);
-                }}
+                onClick={() => handleDeleteNote(id)}
               >
                 <Delete size={14} />
                 Delete
@@ -140,7 +141,7 @@ const NoteCard = ({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

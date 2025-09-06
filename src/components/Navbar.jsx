@@ -1,8 +1,10 @@
-import React, { useState, useContext } from "react";
+import { useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { AuthContext } from "../contexts/AuthContext";
 import materialHubLogo from "../assets/material-hub-logo.png";
+import { motion } from "motion/react";
+
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,7 +43,10 @@ const Navbar = () => {
   );
 
   return (
-    <div className="flex justify-center items-center">
+    <motion.div className="flex justify-center items-center"
+    animate={{ y: [-100, 0], opacity: [0, 1] }}
+    transition={{ duration: 0.8 , delay:0.2 , type: "spring", stiffness: 100, damping: 10 }}
+    >
       <nav className="z-50 fixed top-2 w-[95%] px-6 py-4 flex items-center justify-between rounded-4xl bg-white/20 backdrop-blur-lg shadow-lg">
         <Link to="/">
           <img
@@ -57,19 +62,19 @@ const Navbar = () => {
         <div className="hidden md:flex gap-3">
           {!token ? (
             <Link to="/login">
-              <button className="px-4 py-2 rounded-xl bg-[#317B74] text-white font-semibold hover:bg-[#25645b] transition">
+              <button className="px-4 py-2 rounded-xl bg-[#317B74] text-white font-semibold hover:bg-[#25645b] hover:scale-[1.1] transition">
                 Login
               </button>
             </Link>
           ) : (
             <>
               <Link to="/myUploads">
-                <button className="px-4 py-2 rounded-xl bg-[#bf00ea] text-white font-semibold hover:bg-[#8501c3] transition">
+                <button className="px-4 py-2 rounded-xl bg-[#bf00ea] text-white font-semibold hover:bg-[#8501c3] hover:scale-[1.1] transition">
                   My uploads
                 </button>
               </Link>
               <button
-                className="px-4 py-2 rounded-xl bg-[#ff2929] text-white font-semibold hover:bg-[#da4040] transition"
+                className="px-4 py-2 rounded-xl bg-[#ff2929] text-white font-semibold hover:bg-[#da4040] hover:scale-[1.1] transition"
                 onClick={handleLogout}
               >
                 Logout
@@ -79,7 +84,7 @@ const Navbar = () => {
 
           {/* Upload → always visible */}
           <Link to="/upload">
-            <button className="px-4 py-2 rounded-xl bg-[#FF9D01] text-white font-semibold hover:bg-[#e68c00] transition">
+            <button className="px-4 py-2 rounded-xl bg-[#FF9D01] text-white font-semibold hover:bg-[#e68c00] hover:scale-[1.1]  transition">
               Upload
             </button>
           </Link>
@@ -128,7 +133,7 @@ const Navbar = () => {
           </Link>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

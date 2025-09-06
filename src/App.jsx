@@ -13,9 +13,10 @@ import AdminLogin from "./components/AdminLogin";
 import AdminDashboard from "./components/AdminDashboard";
 import AdminProtected from "./contexts/AdminProtected";
 import MyUpload from "./components/MyUpload";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "./contexts/AuthContext";
 import { AdminContext } from "./contexts/AdminContext";
+import LoadingScreen from "./components/LoadingScreen";
 
 function AppWrapper() {
   const location = useLocation();
@@ -41,7 +42,7 @@ function AppWrapper() {
         adminLogout();
       }
     }
-  } , [logout, adminLogout]);
+  }, [logout, adminLogout]);
 
   return (
     <>
@@ -86,9 +87,16 @@ function AppWrapper() {
 }
 
 function App() {
+  const [loading, setloading] = useState(true);
+  useEffect(() =>{
+    setTimeout(() => {
+      setloading(false);
+    }, 4000);
+  } , [])
+
   return (
     <BrowserRouter>
-      <AppWrapper />
+    {loading ? (<LoadingScreen/>) : <AppWrapper />}
     </BrowserRouter>
   );
 }
